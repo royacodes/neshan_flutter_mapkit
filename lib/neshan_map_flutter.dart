@@ -22,12 +22,33 @@ class NeshanMapFlutter extends StatefulWidget {
 }
 
 class _NeshanMapFlutterState extends State<NeshanMapFlutter> {
+  static const String _viewType = 'neshan_mapkit/neshan_map';
+  var gestureRecognizers = const <Factory<OneSequenceGestureRecognizer>>{};
   @override
   Widget build(BuildContext context) {
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return AndroidView(
-        viewType: 'neshan-map',
-        onPlatformViewCreated: _onPlatformViewCreated,
+      return PlatformViewLink(
+          viewType: _viewType,
+          surfaceFactory: (BuildContext context, PlatformViewController controller) {
+            return AndroidViewSurface(
+              controller: controller as AndroidViewController,
+              gestureRecognizers: gestureRecognizers,
+              hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+            );
+          },
+          onCreatePlatformView: (PlatformViewCreationParams params) {
+            return PlatformViewsService.initSurfaceAndroidView(
+              id: params.id,
+              viewType: _viewType,
+              layoutDirection: TextDirection.ltr,
+              // creationParams: _creationParams(),
+              creationParamsCodec: StandardMessageCodec(),
+              onFocus: () => params.onFocusChanged(true),
+            )
+              ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
+              ..addOnPlatformViewCreatedListener(_onPlatformViewCreated)
+              ..create();
+          }
       );
     }
     return Text(
